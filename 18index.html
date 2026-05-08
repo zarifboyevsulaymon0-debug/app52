@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Finance Analytics</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --primary: #6366f1;
+            --accent: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 800px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-box {
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .income-box { background: var(--accent); }
+        .expense-box { background: var(--danger); }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            flex: 1;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding-top: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .bar {
+            flex: 1;
+            background: var(--primary);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.5s ease;
+            position: relative;
+        }
+
+        .bar:hover::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="card">
+        <h2>Moliyaviy Tahlil</h2>
+        <div class="stats-grid">
+            <div class="stat-box income-box">
+                <div>Daromad</div>
+                <h3 id="totalIncome">0 so'm</h3>
+            </div>
+            <div class="stat-box expense-box">
+                <div>Xarajat</div>
+                <h3 id="totalExpense">0 so'm</h3>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="amount" placeholder="Summa">
+            <select id="type">
+                <option value="income">Daromad</option>
+                <option value="expense">Xarajat</option>
+            </select>
+            <button onclick="addData()">Qo'shish</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Xarajatlar Grafigi</h3>
+        <div class="chart-container" id="chart">
+            <!-- Grafik barlari JS orqali qo'shiladi -->
+        </div>
+    </div>
+</div>
+
+<script>
+    let data = JSON.parse(localStorage.getItem('finance_data')) || [];
+
+    function addData() {
+        const amount = document.getElementById('amount').value;
+        const type = document.getElementById('type').value;
+
+        if (amount > 0) {
+            data.push({ amount: parseFloat(amount), type, date: new Date().toLocaleTimeString() });
+            document.getElementById('amount').value = '';
+            updateDashboard();
+        }
+    }
+
+    function updateDashboard() {
+        localStorage.setItem('finance_data', JSON.stringify(data));
+        
+        let income = data.filter(d => d.type === 'income').reduce((sum, d) => sum + d.amount, 0);
+        let expense = data.filter(d => d.type === 'expense').reduce((sum, d) => sum + d.amount, 0);
+
+        document.getElementById('totalIncome').innerText = income.toLocaleString() + " so'm";
+        document.getElementById('totalExpense').innerText = expense.toLocaleString() + " so'm";
+
+        renderChart();
+    }
+
+    function renderChart() {
+        const chart = document.getElementById('chart');
+        chart.innerHTML = '';
+        
+        const expenses = data.filter(d => d.type === 'expense');
+        const maxVal = Math.max(...expenses.map(d => d.amount), 1);
+
+        expenses.slice(-10).forEach(d => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            const height = (d.amount / maxVal) * 100;
+            bar.style.height = height + '%';
+            bar.setAttribute('data-value', d.amount.toLocaleString());
+            chart.appendChild(bar);
+        });
+    }
+
+    updateDashboard();
+</script>
+
+</body>
+</html>
